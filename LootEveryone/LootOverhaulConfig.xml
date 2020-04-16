@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LootOverHaulConfig>
+  <!--
+    GLOSARY:
+      AGENT: An Entity. In this case you can think of an agent like an allied/enemy soldier, companions, other lords or even horses and camels.  
+  -->
+  <AllyLootSettings>
+    <!-- 
+        Set this to true to get a chance to loot allied corpses too!
+        Disabled by default. It allows to some cheesy money making by suiciding your own soldiers.
+    -->
+    <LootAlliesEnabled>false</LootAlliesEnabled>
+  </AllyLootSettings>
+	<DropRateSettings>
+    <!--
+			  These values represent the drop chance of an actual agent equipment item as loot.
+				You can set a variable chance by tweaking Min and Max chances. 
+        The drop chance will get calculated on every agent death.
+        
+        You have between 20-35% of getting a piece of equipment as a loot by default.
+				Set Min and Max to an equal value to get a fixed drop chance.
+        
+        Values accepted: from 0.00 to 1.00
+        
+        If Min or Max < 0.00, then Min or Max=0.00
+        If Min or Max > 1.00, then Min or Max=1.00
+        If Max < Min, then Max=Min
+    -->
+		<MinDropChance>0.20</MinDropChance>
+    <MaxDropChance>0.35</MaxDropChance>
+	</DropRateSettings>
+  <DebugSettings>
+    <DebugEnabled>false</DebugEnabled>
+  </DebugSettings>
+</LootOverHaulConfig>

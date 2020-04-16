@@ -1,0 +1,36 @@
+﻿<Module>
+  <Name value="Loot Overhaul"/>
+  <Id value="LootOverhaul"/>
+  <Version value="e1.1.0"/>
+  <SingleplayerModule value="true"/>
+  <MultiplayerModule value="false"/>
+  <Official value="false"/>
+  <DependedModules>
+    <DependedModule Id="Native"/>
+    <DependedModule Id="SandBoxCore"/>
+    <DependedModule Id="Sandbox"/>
+    <DependedModule Id="CustomBattle"/>
+    <DependedModule Id="StoryMode"/>
+  </DependedModules>
+  <SubModules>
+    <SubModule>
+      <Name value="LootOverhaul"/>
+      <DLLName value="LootOverhaul.dll"/>
+      <SubModuleClassType value="LootOverhaul.SubModule"/>
+      <Tags>
+        <Tag key="DedicatedServerType" value="none" />
+        <Tag key="IsNoRenderModeElement" value="false" />
+      </Tags>
+    </SubModule>
+  </SubModules>
+  <ModSettings>
+    <ModToggleSettings>
+      <ModToggleSetting Key="Enabled" Order="1"  Text="Loot allies" Description="Allows to loot allies, too" DefaultValue="0"/>
+      <ModToggleSetting Key="EnableDebug" Order="2" Text="Enable Debug" Description="Enable Mod Debug Messages" DefaultValue="0"/>
+    </ModToggleSettings>
+    <ModNumericSettings>
+      <ModNumericSetting Key="MinDropChance" Order="3" Text="Min. Drop Chance" Description="Each item has an averaged min/max drop rate chance." DefaultValue="20" MaxValue="100" MinValue="0"/>
+      <ModNumericSetting Key="MaxDropChance" Order="4" Text="Max. Drop Chance" Description="Set Min and Max equal values for a fixed drop rate chance." DefaultValue="35" MaxValue="100" MinValue="0"/>
+    </ModNumericSettings>
+  </ModSettings>
+</Module>
