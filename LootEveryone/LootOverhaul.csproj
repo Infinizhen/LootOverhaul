@@ -35,8 +35,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\MBModsSettings\bin\Win64_Shipping_Client\0Harmony.dll</HintPath>
+      <HintPath>.\0Harmony.dll</HintPath>
     </Reference>
+    <Reference Include="ModLib">
+      <HintPath>.\ModLib.dll</HintPath>
+    </Reference>
+    <Reference Include="ModLib.Patches">
+      <HintPath>.\ModLib.Patches.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web.Extensions" />
@@ -73,11 +80,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="SubModule.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="LootOverHaulConfig.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
