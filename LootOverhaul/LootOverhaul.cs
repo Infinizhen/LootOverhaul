@@ -33,25 +33,30 @@ namespace LootOverhaul
         [SettingProperty("Enable debug", "Set debug on/off.")]
         public bool DebugEnabled { get; set; } = false;
 
-        [XmlElement]
-        [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Extra chance to loot an unit", 0f, 1f, "Sets the maximum extra chance to loot an unit on death.")]
-        public float MaxUnitLootChance { get; set; } = 0.05f;
+        //[XmlElement]
+        //[SettingPropertyGroup("Extra drop chances")]
+        //[SettingProperty("Replace original loot tables", "By enabling this, you will only receive the loot this mod generates!")]
+        //public bool ReplaceOriginalLootTables { get; set; } = false;
 
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Extra chance to loot an unit", 0f, 1f, "Sets the minimum extra chance to loot an unit on death.")]
-        public float MinUnitLootChance { get; set; } = 0.03f;
+        [SettingProperty("Min. Extra chance to loot an unit", 0f, 1f, "Sets the minimum extra chance to loot an unit on death.")]
+        public float MinUnitLootChance { get; set; }
 
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Extra chance to loot item", 0f, 1f, "Sets the maximum extra chance to loot a random dead unit equiped item.")]
-        public float MaxItemLootChance { get; set; } = 0.25f;
+        [SettingProperty("Max. Extra chance to loot an unit", 0f, 1f, "Sets the maximum extra chance to loot an unit on death.")]
+        public float MaxUnitLootChance { get; set; }
 
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Extra chance to loot item", 0f, 1f, "Sets the minimum extra chance to loot a random dead unit equiped item.")]
-        public float MinItemLootChance { get; set; } = 0.10f;
+        [SettingProperty("Min. Extra chance to loot item", 0f, 1f, "Sets the minimum extra chance to loot a random dead unit equiped item.")]
+        public float MinItemLootChance { get; set; }
+
+        [XmlElement]
+        [SettingPropertyGroup("Extra drop chances")]
+        [SettingProperty("Max. Extra chance to loot item", 0f, 1f, "Sets the maximum extra chance to loot a random dead unit equiped item.")]
+        public float MaxItemLootChance { get; set; }
 
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
@@ -60,7 +65,7 @@ namespace LootOverhaul
 
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Apply item per unit to lord executions", "Sets the maximum number of items to loot from an unit.")]
+        [SettingProperty("Apply item per unit to lord executions", "Applies the max items looted per unit limitations to lord executions. Keep it disabled to loot ALL lord items on execution.")]
         public bool ApplyItemPerUnitToLords { get; set; } = false;
 
         [XmlElement]
@@ -73,6 +78,7 @@ namespace LootOverhaul
     {
         public static bool LootAlliesEnabled;
         public static bool ApplyItemPerUnitToLords;
+        //public static bool ReplaceOriginalLootTables;
         public static bool debugEnabled;
         public static int maxItemsPerUnitAllowed;
 
@@ -107,6 +113,7 @@ namespace LootOverhaul
                 debugEnabled = settingsInstance.DebugEnabled;
                 maxItemsPerUnitAllowed = SetMaxItemsPerUnitAllowed(settingsInstance.MaxItemsPerUnit);
                 ApplyItemPerUnitToLords = settingsInstance.ApplyItemPerUnitToLords;
+                //ReplaceOriginalLootTables = settingsInstance.ReplaceOriginalLootTables;
             }
             catch (Exception ex)
             {
@@ -152,28 +159,29 @@ namespace LootOverhaul
         float maxItemChance;
         float minUnitChance;
         float maxUnitChance;
+
         public double CalculateChanceForUnit()
         {           
-            if (minUnitChance <0)
-            {
-                minUnitChance = 0;
-            }
-
-            if (maxUnitChance > 1.00f)
-            {
-                maxUnitChance = 1.00f;
-            }
-
-            if (minUnitChance > maxUnitChance)
-            {
-                maxUnitChance = minUnitChance;
-            }
-
             //this is the actual drop rate returned: a random between min and max.
             return new Random().NextDouble() * (maxUnitChance - minUnitChance) + minUnitChance;
         }
-
         public double CalculateChanceForItem()
+        {
+            //this is the actual drop rate returned: a random between min and max.
+            return new Random().NextDouble() * (maxItemChance - minItemChance) + minItemChance;
+        }
+
+        private void SetChances()
+        {
+            minItemChance = SubModule.settingsInstance.MinItemLootChance;
+            maxItemChance = SubModule.settingsInstance.MaxItemLootChance;
+            minUnitChance = SubModule.settingsInstance.MinUnitLootChance;
+            maxUnitChance = SubModule.settingsInstance.MaxUnitLootChance;
+
+            SetItemChances();
+            SetUnitChances();
+        }
+        private void SetItemChances()
         {
             if (minItemChance < 0f)
             {
@@ -189,17 +197,27 @@ namespace LootOverhaul
             {
                 maxItemChance = minItemChance;
             }
-
-            //this is the actual drop rate returned: a random between min and max.
-            return new Random().NextDouble() * (maxItemChance - minItemChance) + minItemChance;
         }
+        private void SetUnitChances()
+        {
+            if (minUnitChance < 0)
+            {
+                minUnitChance = 0;
+            }
 
+            if (maxUnitChance > 1.00f)
+            {
+                maxUnitChance = 1.00f;
+            }
+
+            if (minUnitChance > maxUnitChance)
+            {
+                maxUnitChance = minUnitChance;
+            }
+        }
         public DropChance()
         {
-            minItemChance = SubModule.settingsInstance.MinItemLootChance;
-            maxItemChance = SubModule.settingsInstance.MaxItemLootChance;
-            minUnitChance = SubModule.settingsInstance.MinUnitLootChance;
-            maxUnitChance = SubModule.settingsInstance.MaxUnitLootChance;
+            SetChances();            
         }
     }
 
@@ -227,12 +245,15 @@ namespace LootOverhaul
             DropChance dc = new DropChance();
             try
             {
-                if ((affectedAgent.IsMainAgent || affectedAgent.IsMount))
+                if(MapEvent.PlayerMapEvent==null)
                     return;
 
-                if (!affectedAgent.IsEnemyOf(Agent.Main))
+                if ((affectedAgent.Character==PartyBase.MainParty.Leader || affectedAgent.IsMount))
+                    return;
+
+                if (affectedAgent.Team.IsPlayerAlly)
                 {
-                    if (SubModule.settingsInstance.DebugEnabled) { SubModule.WriteDebugMessage("Killed an ally."); }
+                    if (SubModule.settingsInstance.DebugEnabled && affectorAgent.Character== PartyBase.MainParty.Leader) { SubModule.WriteDebugMessage("You've killed an ally!"); }
                     if (!SubModule.settingsInstance.LootAlliesEnabled)
                         return;
                 }
@@ -241,13 +262,14 @@ namespace LootOverhaul
                 //UNIT CHECK!
                 if (rng.NextDouble() < dc.CalculateChanceForUnit())
                 {
-                    List<EquipmentIndex> lootedItemsList = new List<EquipmentIndex>();
+                    List<EquipmentIndex> lootedEquipmentIndexesOfUnit = new List<EquipmentIndex>();
+                    List<ItemObject> lootedItemObjects = new List<ItemObject>();
 
                     //START LOOTING THAT JUICY GEAR!
                     for(int i=0;i<12;++i)
                     {                        
                         EquipmentIndex equipmentIndex = (EquipmentIndex)(rng.Next(0,12));
-                        if (lootedItemsList.Contains(equipmentIndex))
+                        if (lootedEquipmentIndexesOfUnit.Contains(equipmentIndex))
                         {
                             continue;
                         }
@@ -259,9 +281,9 @@ namespace LootOverhaul
                             if (equipmentFromSlot.Item != null)
                             {
                                 equipmentFromSlot = affectedAgent.Character.Equipment.GetEquipmentFromSlot(equipmentIndex);
-                                lootedItemsList.Add(equipmentIndex);
+                                lootedEquipmentIndexesOfUnit.Add(equipmentIndex);
                                 MapEvent.PlayerMapEvent.ItemRosterForPlayerLootShare(PartyBase.MainParty).AddToCounts(equipmentFromSlot.Item, 1, true);
-                                SubModule.WriteDebugMessage(equipmentFromSlot.Item.Name.ToString() + " was looted!");
+                                SubModule.WriteDebugMessage(affectedAgent.Team.IsPlayerAlly?"Allied " + equipmentFromSlot.Item.Name.ToString() + " was looted!" : "Enemy "+equipmentFromSlot.Item.Name.ToString() + " was looted!");
                             }
                         }
                     }
@@ -270,7 +292,13 @@ namespace LootOverhaul
                 {
                     if (SubModule.settingsInstance.DebugEnabled)
                     {
-                        SubModule.WriteDebugMessage("[UNIT] No Luck!");
+                        if(affectedAgent.Team.IsPlayerAlly && SubModule.settingsInstance.LootAlliesEnabled){
+                            SubModule.WriteDebugMessage("[Allied unit] No Luck! Will not be looted :(");
+                        }
+                        if(!affectedAgent.Team.IsPlayerAlly)
+                        {
+                            SubModule.WriteDebugMessage("[Enemy unit] No Luck! Will not be looted :(");
+                        }
                     }
                 }
             }
