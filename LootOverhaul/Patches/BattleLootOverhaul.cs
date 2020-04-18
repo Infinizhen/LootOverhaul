@@ -20,7 +20,10 @@ namespace LootOverhaul
                     return;
 
                 if ((affectedAgent.Character == PartyBase.MainParty.Leader || affectedAgent.IsMount))
+                {
+                    SubModule.WriteDebug("Some coward has fleed...");
                     return;
+                }
 
                 if (affectorAgent == null && !LootOverhaulSettings.Instance.LootPanickedEnabled)
                     return;

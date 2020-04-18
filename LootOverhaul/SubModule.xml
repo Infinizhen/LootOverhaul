@@ -2,7 +2,7 @@
 <Module>
   <Name value="Loot Overhaul"/>
   <Id value="zLootOverhaul"/>
-  <Version value="B1.2.0"/>
+  <Version value="C1.2.0"/>
   <DefaultModule value="false"/>
   <SingleplayerModule value="true"/>
   <MultiplayerModule value="false"/>

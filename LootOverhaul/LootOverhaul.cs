@@ -19,7 +19,7 @@ namespace LootOverhaul
             //MessageBox.Show("STOP");
             InitializeModLib();
             ApplyHarmonyPatches();
-            SetTestOptionInMainMenu();
+            //SetTestOptionInMainMenu();
         }
 
         private void InitializeModLib()
@@ -120,7 +120,7 @@ namespace LootOverhaul
         {
             string message = _equipmentFromSlot.Item.Name.ToString();
             string side = _isEnemy ? "enemy:" : "ally:";
-            SubModule.WriteMessageInChatLog(message, "Looted "+side);
+            SubModule.WriteDebug(message, "Looted "+side);
         }
 
         public static T PickRandom<T>(this IEnumerable<T> source)
