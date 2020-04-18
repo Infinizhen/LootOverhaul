@@ -1,15 +1,9 @@
 ﻿using HarmonyLib;
-using LootOverhaul;
 using ModLib;
-using ModLib.Attributes;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Web.Script.Serialization;
+using System.Linq;
 using System.Windows;
-using System.Xml;
-using System.Xml.Serialization;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
@@ -17,363 +11,133 @@ using TaleWorlds.MountAndBlade;
 
 namespace LootOverhaul
 {
-    public class LootOverHaulSettings : SettingsBase
-    {
-        public const string InstanceID = "LootOverhaul";
-
-        [XmlElement]        
-        public override string ID { get; set; } = InstanceID;
-
-        public override string ModuleFolderName => "LootOverhaul";
-
-        public override string ModName => "Loot Overhaul";
-
-        [XmlElement]
-        [SettingPropertyGroup("Developer options")]
-        [SettingProperty("Enable debug", "Set debug on/off.")]
-        public bool DebugEnabled { get; set; } = false;
-
-        //[XmlElement]
-        //[SettingPropertyGroup("Extra drop chances")]
-        //[SettingProperty("Replace original loot tables", "By enabling this, you will only receive the loot this mod generates!")]
-        //public bool ReplaceOriginalLootTables { get; set; } = false;
-
-        [XmlElement]
-        [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Min. Extra chance to loot an unit", 0f, 1f, "Sets the minimum extra chance to loot an unit on death.")]
-        public float MinUnitLootChance { get; set; }
-
-        [XmlElement]
-        [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Max. Extra chance to loot an unit", 0f, 1f, "Sets the maximum extra chance to loot an unit on death.")]
-        public float MaxUnitLootChance { get; set; }
-
-        [XmlElement]
-        [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Min. Extra chance to loot item", 0f, 1f, "Sets the minimum extra chance to loot a random dead unit equiped item.")]
-        public float MinItemLootChance { get; set; }
-
-        [XmlElement]
-        [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Max. Extra chance to loot item", 0f, 1f, "Sets the maximum extra chance to loot a random dead unit equiped item.")]
-        public float MaxItemLootChance { get; set; }
-
-        [XmlElement]
-        [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Allow loot allies", "Allows to loot our allies on death.")]
-        public bool LootAlliesEnabled { get; set; } = false;
-
-        [XmlElement]
-        [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Apply item per unit to lord executions", "Applies the max items looted per unit limitations to lord executions. Keep it disabled to loot ALL lord items on execution.")]
-        public bool ApplyItemPerUnitToLords { get; set; } = false;
-
-        [XmlElement]
-        [SettingPropertyGroup("Extra drop chances")]
-        [SettingProperty("Max items per unit allowed", 0, 12, "Sets the maximum number of items to loot from an unit.")]
-        public int MaxItemsPerUnit { get; set; } = 2;
-    }
-
     public class SubModule : MBSubModuleBase
     {
-        public static bool LootAlliesEnabled;
-        public static bool ApplyItemPerUnitToLords;
-        //public static bool ReplaceOriginalLootTables;
-        public static bool debugEnabled;
-        public static int maxItemsPerUnitAllowed;
-
-        public static LootOverHaulSettings settingsInstance
-        {
-            get
-            {
-                return (LootOverHaulSettings)SettingsDatabase.GetSettings(LootOverHaulSettings.InstanceID);
-            }
-        }        
-
         protected override void OnSubModuleLoad()
         {
+            base.OnSubModuleLoad();
+            //MessageBox.Show("STOP");
+            InitializeModLib();
+            ApplyHarmonyPatches();
+            SetTestOptionInMainMenu();
+        }
+
+        private void InitializeModLib()
+        {
             try
             {
-                FileDatabase.Initialise("LootOverhaul");
-                LootOverHaulSettings settings = FileDatabase.Get<LootOverHaulSettings>(LootOverHaulSettings.InstanceID);
-                if (settings == null) {
-                    settings = new LootOverHaulSettings(); }
-                SettingsDatabase.RegisterSettings(settings);
-                SettingsDatabase.SaveSettings(settingsInstance);
-                FileDatabase.SaveToFile("LootOverhaul",settingsInstance);
+                FileDatabase.Initialise("zLootOverhaul");
+                SettingsDatabase.RegisterSettings((FileDatabase.Get<LootOverhaulSettings>("zLootOverhaul") ?? new LootOverhaulSettings()));
             }
             catch (Exception ex)
             {
-                MessageBox.Show("ERROR IN LOOT OVERHAUL! "+ex.Message,"ERROR IN LOOT OVERHAUL!");
+                MessageBox.Show("ERROR IN LOOT OVERHAUL! " + ex.Message, "ERROR IN LOOT OVERHAUL!");
             }
+        }
 
-            try
-            {
-                LootAlliesEnabled = settingsInstance.LootAlliesEnabled;
-                debugEnabled = settingsInstance.DebugEnabled;
-                maxItemsPerUnitAllowed = SetMaxItemsPerUnitAllowed(settingsInstance.MaxItemsPerUnit);
-                ApplyItemPerUnitToLords = settingsInstance.ApplyItemPerUnitToLords;
-                //ReplaceOriginalLootTables = settingsInstance.ReplaceOriginalLootTables;
-            }
-            catch (Exception ex)
-            {
-                InformationManager.DisplayMessage(new InformationMessage(ex.Message));
-            }
-
+        private void ApplyHarmonyPatches()
+        {
             new Harmony("Infinizhen.LootOverhaul").PatchAll();
         }
 
-        protected override void OnSubModuleUnloaded() // Called when exiting Bannerlord entirely
+        private void SetTestOptionInMainMenu()
         {
-            SettingsDatabase.SaveSettings(settingsInstance);
-            FileDatabase.SaveToFile("LootOverhaul", settingsInstance);
-            base.OnSubModuleUnloaded();
+            SettingsBase s = LootOverhaulSettings.Instance;
+            Module.CurrentModule.AddInitialStateOption(new InitialStateOption("LootOverhaulTestMainMenuOption",
+            new TextObject("Loot Overhaul", null),
+            9990,
+            () =>
+            {
+                WriteMessageInChatLog("---------------------------------------");
+                WriteMessageInChatLog("Current values loaded for Loot Overhaul:");
+                WriteMessageInChatLog("Debug Enabled: " + (LootOverhaulSettings.Instance.DebugEnabled ? "Yes" : "No"));                
+                WriteMessageInChatLog("Min/Max Item/Unit LootChance: " + (LootOverhaulSettings.Instance.MinItemLootChance*100).ToString() + "%/" + (LootOverhaulSettings.Instance.MaxItemLootChance * 100).ToString() + "% - " + (LootOverhaulSettings.Instance.MinUnitLootChance * 100).ToString() + "%/" + (LootOverhaulSettings.Instance.MaxUnitLootChance * 100).ToString() + "%");
+                WriteMessageInChatLog("Loot Allies: " + (LootOverhaulSettings.Instance.LootAlliesEnabled ? "Yes" : "No"));
+                WriteMessageInChatLog("Loot Panicked: " + (LootOverhaulSettings.Instance.LootPanickedEnabled ? "Yes" : "No"));
+                WriteMessageInChatLog("Max Items Looted per Unit: " + LootOverhaulSettings.Instance.MaxItemsPerUnit.ToString());
+                WriteMessageInChatLog("Loot executed lords: " + (LootOverhaulSettings.Instance.LootExecutedLords ? "Yes" : "No"));
+                WriteMessageInChatLog("Apply Max Items Looted per Unit to Executions: " + (LootOverhaulSettings.Instance.ApplyItemPerUnitToLords ? "Yes" : "No"));
+            },
+            false)
+            );
         }
 
-        private int SetMaxItemsPerUnitAllowed(int value)
+        public static void WriteMessageInChatLog(string message, string title = "")
         {
-            if (value>12)
-            {
-                return 12;
-            }
-
-            if (value<0)
-            {
-                return 0;
-            }
-
-            return value;
+            InformationManager.DisplayMessage(new InformationMessage(title + " " + message));
         }
 
-        public static void WriteDebugMessage(string message, string title = "DEBUG:")
-        {            
-            if (!SubModule.settingsInstance.DebugEnabled)
+        public static void WriteDebug(string message, string title = "LootOverhaulDebug:")
+        {
+            if (!LootOverhaulSettings.Instance.DebugEnabled)
                 return;
             InformationManager.DisplayMessage(new InformationMessage(title + " " + message));
         }
-    }
 
-    public class DropChance
-    {
-        float minItemChance;
-        float maxItemChance;
-        float minUnitChance;
-        float maxUnitChance;
-
-        public double CalculateChanceForUnit()
-        {           
-            //this is the actual drop rate returned: a random between min and max.
-            return new Random().NextDouble() * (maxUnitChance - minUnitChance) + minUnitChance;
-        }
-        public double CalculateChanceForItem()
+        public static void WriteException(string exceptionMessage, string title = "LootOverhaulException:")
         {
-            //this is the actual drop rate returned: a random between min and max.
-            return new Random().NextDouble() * (maxItemChance - minItemChance) + minItemChance;
-        }
-
-        private void SetChances()
-        {
-            minItemChance = SubModule.settingsInstance.MinItemLootChance;
-            maxItemChance = SubModule.settingsInstance.MaxItemLootChance;
-            minUnitChance = SubModule.settingsInstance.MinUnitLootChance;
-            maxUnitChance = SubModule.settingsInstance.MaxUnitLootChance;
-
-            SetItemChances();
-            SetUnitChances();
-        }
-        private void SetItemChances()
-        {
-            if (minItemChance < 0f)
-            {
-                minItemChance = 0;
-            }
-
-            if (maxItemChance > 1.00f)
-            {
-                maxItemChance = 1.00f;
-            }
-
-            if (minItemChance > maxItemChance)
-            {
-                maxItemChance = minItemChance;
-            }
-        }
-        private void SetUnitChances()
-        {
-            if (minUnitChance < 0)
-            {
-                minUnitChance = 0;
-            }
-
-            if (maxUnitChance > 1.00f)
-            {
-                maxUnitChance = 1.00f;
-            }
-
-            if (minUnitChance > maxUnitChance)
-            {
-                maxUnitChance = minUnitChance;
-            }
-        }
-        public DropChance()
-        {
-            SetChances();            
+            WriteMessageInChatLog(exceptionMessage, title);
         }
     }
 
-    //Just a placeholder Postfix
-    [HarmonyPatch(typeof(MapEvent), "CalculateBattleResults")]
-    public class MapEventLootOverhaul
+    public static class LootOverhaul
     {
-        public static void Postfix(MapEvent __instance, Boolean forScoreBoard=false)
+        public static List<EquipmentIndex> allowedSlotsToLoot = new List<EquipmentIndex>{
+            EquipmentIndex.Head,
+            EquipmentIndex.Cape,
+            EquipmentIndex.Body,
+            EquipmentIndex.Gloves,
+            EquipmentIndex.Leg,
+            EquipmentIndex.Horse,
+            EquipmentIndex.HorseHarness,
+            EquipmentIndex.Weapon0,
+            EquipmentIndex.Weapon1,
+            EquipmentIndex.Weapon2,
+            EquipmentIndex.Weapon3,
+            EquipmentIndex.Weapon4
+        };
+
+        public static void Loot(ItemObject _item, int number=1, bool removeDepleted=true, bool IsExecution=false)
         {
-            if (__instance.IsPlayerMapEvent && (__instance.PlayerSide == __instance.WinningSide))
+            if (_item == null)
             {
-                //IEnumerator<PartyBase> ieParty = __instance.PartiesOnSide(__instance.DefeatedSide).GetEnumerator();
+                SubModule.WriteException("Tried to loot a null item.");
                 return;
-                //TODO
             }
-        }
-    }
 
-    [HarmonyPatch(typeof(Mission), "OnAgentRemoved")]
-    public class BattleLootOverhaul
-    {
-        public static void Postfix(Mission __instance,Agent affectedAgent,Agent affectorAgent,AgentState agentState,KillingBlow killingBlow)
+            if (IsExecution)
+            {
+                PartyBase.MainParty.ItemRoster.AddToCounts(_item, 1, true);
+                return;
+            }
+
+            if (MapEvent.PlayerMapEvent!=null)
+                MapEvent.PlayerMapEvent.ItemRosterForPlayerLootShare(PartyBase.MainParty).AddToCounts(_item, 1, true);
+            
+        }
+
+        public static void WriteLootMessage(EquipmentElement _equipmentFromSlot, bool _isEnemy = true)
         {
-            Random rng = new Random(Guid.NewGuid().GetHashCode());
-            DropChance dc = new DropChance();
-            try
-            {
-                if(MapEvent.PlayerMapEvent==null)
-                    return;
-
-                if ((affectedAgent.Character==PartyBase.MainParty.Leader || affectedAgent.IsMount))
-                    return;
-
-                if (affectedAgent.Team.IsPlayerAlly)
-                {
-                    if (SubModule.settingsInstance.DebugEnabled && affectorAgent.Character== PartyBase.MainParty.Leader) { SubModule.WriteDebugMessage("You've killed an ally!"); }
-                    if (!SubModule.settingsInstance.LootAlliesEnabled)
-                        return;
-                }
-
-
-                //UNIT CHECK!
-                if (rng.NextDouble() < dc.CalculateChanceForUnit())
-                {
-                    List<EquipmentIndex> lootedEquipmentIndexesOfUnit = new List<EquipmentIndex>();
-                    List<ItemObject> lootedItemObjects = new List<ItemObject>();
-
-                    //START LOOTING THAT JUICY GEAR!
-                    for(int i=0;i<12;++i)
-                    {                        
-                        EquipmentIndex equipmentIndex = (EquipmentIndex)(rng.Next(0,12));
-                        if (lootedEquipmentIndexesOfUnit.Contains(equipmentIndex))
-                        {
-                            continue;
-                        }
-
-                        //ITEM CHECK!
-                        if (rng.NextDouble() < dc.CalculateChanceForItem())
-                        {
-                            EquipmentElement equipmentFromSlot = affectedAgent.Character.Equipment.GetEquipmentFromSlot(equipmentIndex);
-                            if (equipmentFromSlot.Item != null)
-                            {
-                                equipmentFromSlot = affectedAgent.Character.Equipment.GetEquipmentFromSlot(equipmentIndex);
-                                lootedEquipmentIndexesOfUnit.Add(equipmentIndex);
-                                MapEvent.PlayerMapEvent.ItemRosterForPlayerLootShare(PartyBase.MainParty).AddToCounts(equipmentFromSlot.Item, 1, true);
-                                SubModule.WriteDebugMessage(affectedAgent.Team.IsPlayerAlly?"Allied " + equipmentFromSlot.Item.Name.ToString() + " was looted!" : "Enemy "+equipmentFromSlot.Item.Name.ToString() + " was looted!");
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    if (SubModule.settingsInstance.DebugEnabled)
-                    {
-                        if(affectedAgent.Team.IsPlayerAlly && SubModule.settingsInstance.LootAlliesEnabled){
-                            SubModule.WriteDebugMessage("[Allied unit] No Luck! Will not be looted :(");
-                        }
-                        if(!affectedAgent.Team.IsPlayerAlly)
-                        {
-                            SubModule.WriteDebugMessage("[Enemy unit] No Luck! Will not be looted :(");
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                SubModule.WriteDebugMessage(ex.Message);
-            }
+            string message = _equipmentFromSlot.Item.Name.ToString();
+            string side = _isEnemy ? "enemy:" : "ally:";
+            SubModule.WriteMessageInChatLog(message, "Looted "+side);
         }
-    }
 
-    [HarmonyPatch(typeof(PartyScreenLogic), "ExecuteTroop")]
-    public class LordLootOverhaul
-    {
-        public static void Postfix(PartyScreenLogic.PartyCommand command)
+        public static T PickRandom<T>(this IEnumerable<T> source)
         {
-            DropChance dc = new DropChance();
-            Random rng = new Random(Guid.NewGuid().GetHashCode());
-            List<EquipmentElement> lootedItemsList = new List<EquipmentElement>();
-            CharacterObject character = command.Character;
+            return source.PickRandom(1).Single();
+        }
 
-            EquipmentIndex index;
-            EquipmentElement equipmentElement;
+        public static IEnumerable<T> PickRandom<T>(this IEnumerable<T> source, int count)
+        {
+            return source.Shuffle().Take(count);
+        }
 
-            int maxItemsToLoot = 12;
-            if (SubModule.settingsInstance.ApplyItemPerUnitToLords)
-            {
-                maxItemsToLoot = SubModule.settingsInstance.MaxItemsPerUnit;
-            }
-
-            for (int i = 0; i < 12; ++i)
-            {
-                try
-                {
-                    if (SubModule.settingsInstance.ApplyItemPerUnitToLords)
-                    {
-                        index = (EquipmentIndex)i;
-                        equipmentElement = character.Equipment.GetEquipmentFromSlot(index);
-                    }
-                    else
-                    {
-                        index = (EquipmentIndex)rng.Next(0, 12);
-                        equipmentElement = character.Equipment.GetEquipmentFromSlot(index);
-                    }
-                    
-                    if (lootedItemsList.Contains(equipmentElement))
-                    {
-                        continue;
-                    }      
-
-                    if (equipmentElement.Item != null)
-                    {
-                        ItemRoster itemRoster = PartyBase.MainParty.ItemRoster;
-                        equipmentElement = character.Equipment.GetEquipmentFromSlot(index);
-
-                        itemRoster.AddToCounts(equipmentElement.Item, 1, true);
-                        if (SubModule.settingsInstance.ApplyItemPerUnitToLords)
-                        {
-                            lootedItemsList.Add(equipmentElement);
-                        }
-                        SubModule.WriteDebugMessage(equipmentElement.Item.Name.ToString() + " was looted");
-                    }
-
-                    if (SubModule.settingsInstance.ApplyItemPerUnitToLords && lootedItemsList.Count>=maxItemsToLoot)
-                    {
-                        break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    SubModule.WriteDebugMessage(ex.Message);
-                }
-            }
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
+        {
+            return source.OrderBy(x => Guid.NewGuid());
         }
     }
-
 }
-    
-    
+
+

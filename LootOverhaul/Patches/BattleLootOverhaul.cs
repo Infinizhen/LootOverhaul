@@ -1,14 +1,19 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
+using TaleWorlds.MountAndBlade;
 
 namespace LootOverhaul
 {
     [HarmonyPatch(typeof(Mission), "OnAgentRemoved")]
     public class BattleLootOverhaul
     {
+        static readonly Random rng = new Random(Guid.NewGuid().GetHashCode());
+        static readonly DropChance dc = new DropChance();
+
         public static void Postfix(Mission __instance, Agent affectedAgent, Agent affectorAgent, AgentState agentState, KillingBlow killingBlow)
         {
-            Random rng = new Random(Guid.NewGuid().GetHashCode());
-            DropChance dc = new DropChance();
             try
             {
                 if (MapEvent.PlayerMapEvent == null)
@@ -17,61 +22,53 @@ namespace LootOverhaul
                 if ((affectedAgent.Character == PartyBase.MainParty.Leader || affectedAgent.IsMount))
                     return;
 
+                if (affectorAgent == null && !LootOverhaulSettings.Instance.LootPanickedEnabled)
+                    return;
+
                 if (affectedAgent.Team.IsPlayerAlly)
                 {
-                    if (SubModule.settingsInstance.DebugEnabled && affectorAgent.Character == PartyBase.MainParty.Leader) { SubModule.WriteDebugMessage("You've killed an ally!"); }
-                    if (!SubModule.settingsInstance.LootAlliesEnabled)
+                    if (affectorAgent.Character == PartyBase.MainParty.Leader)
+                        SubModule.WriteDebug("You've killed an ally!", "Oops:"); 
+                    if (!LootOverhaulSettings.Instance.LootAlliesEnabled)
                         return;
                 }
 
-
-                //UNIT CHECK!
                 if (rng.NextDouble() < dc.CalculateChanceForUnit())
                 {
-                    List<EquipmentIndex> lootedEquipmentIndexesOfUnit = new List<EquipmentIndex>();
-                    List<ItemObject> lootedItemObjects = new List<ItemObject>();
-
-                    //START LOOTING THAT JUICY GEAR!
-                    for (int i = 0; i < 12; ++i)
+                    int itemsLooted = 0;
+                    foreach (EquipmentIndex ei in LootOverhaul.allowedSlotsToLoot.Shuffle())
                     {
-                        EquipmentIndex equipmentIndex = (EquipmentIndex)(rng.Next(0, 12));
-                        if (lootedEquipmentIndexesOfUnit.Contains(equipmentIndex))
-                        {
-                            continue;
-                        }
+                        EquipmentElement equipmentElement = affectedAgent.Character.Equipment.GetEquipmentFromSlot(ei);
 
-                        //ITEM CHECK!
-                        if (rng.NextDouble() < dc.CalculateChanceForItem())
-                        {
-                            EquipmentElement equipmentFromSlot = affectedAgent.Character.Equipment.GetEquipmentFromSlot(equipmentIndex);
-                            if (equipmentFromSlot.Item != null)
-                            {
-                                equipmentFromSlot = affectedAgent.Character.Equipment.GetEquipmentFromSlot(equipmentIndex);
-                                lootedEquipmentIndexesOfUnit.Add(equipmentIndex);
-                                MapEvent.PlayerMapEvent.ItemRosterForPlayerLootShare(PartyBase.MainParty).AddToCounts(equipmentFromSlot.Item, 1, true);
-                                SubModule.WriteDebugMessage(affectedAgent.Team.IsPlayerAlly ? "Allied " + equipmentFromSlot.Item.Name.ToString() + " was looted!" : "Enemy " + equipmentFromSlot.Item.Name.ToString() + " was looted!");
-                            }
-                        }
-                    }
+                        if (equipmentElement.Item == null)
+                            continue;
+
+                        if (rng.NextDouble() > dc.CalculateChanceForItem())
+                            continue;
+                        
+                        LootOverhaul.Loot(equipmentElement.Item);
+                        LootOverhaul.WriteLootMessage(equipmentElement,!affectedAgent.Team.IsPlayerAlly);
+                        itemsLooted++;
+
+                        if (itemsLooted >= LootOverhaulSettings.Instance.MaxItemsPerUnit)
+                            break;
+                    }      
                 }
                 else
                 {
-                    if (SubModule.settingsInstance.DebugEnabled)
-                    {
-                        if (affectedAgent.Team.IsPlayerAlly && SubModule.settingsInstance.LootAlliesEnabled)
-                        {
-                            SubModule.WriteDebugMessage("[Allied unit] No Luck! Will not be looted :(");
-                        }
-                        if (!affectedAgent.Team.IsPlayerAlly)
-                        {
-                            SubModule.WriteDebugMessage("[Enemy unit] No Luck! Will not be looted :(");
-                        }
-                    }
+                    string messageTitle = affectedAgent.Team.IsPlayerAlly ? "Allied unit:" : "Enemy unit:";
+                    string message = "No Luck! Will not be looted :(";                        
+
+                    if (affectedAgent.Team.IsPlayerAlly && LootOverhaulSettings.Instance.LootAlliesEnabled)
+                        SubModule.WriteDebug(message, messageTitle);
+
+                    if (!affectedAgent.Team.IsPlayerAlly)
+                        SubModule.WriteDebug(message, messageTitle);
                 }
             }
             catch (Exception ex)
             {
-                SubModule.WriteDebugMessage(ex.Message);
+                SubModule.WriteException(ex.Message);
             }
         }
     }

@@ -1,7 +1,9 @@
-﻿<Module>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Module>
   <Name value="Loot Overhaul"/>
-  <Id value="LootOverhaul"/>
-  <Version value="A1.1.0"/>
+  <Id value="zLootOverhaul"/>
+  <Version value="B1.2.0"/>
+  <DefaultModule value="false"/>
   <SingleplayerModule value="true"/>
   <MultiplayerModule value="false"/>
   <Official value="false"/>
@@ -11,6 +13,7 @@
     <DependedModule Id="Sandbox"/>
     <DependedModule Id="CustomBattle"/>
     <DependedModule Id="StoryMode"/>
+    <DependedModule Id="ModLib"/>
   </DependedModules>
   <SubModules>
     <SubModule>
