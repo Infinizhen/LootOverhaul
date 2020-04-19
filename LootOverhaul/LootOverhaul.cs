@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
+using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 
@@ -67,11 +68,14 @@ namespace LootOverhaul
             InformationManager.DisplayMessage(new InformationMessage(title + " " + message));
         }
 
-        public static void WriteDebug(string message, string title = "LootOverhaulDebug:")
+        public static void WriteDebug(string message, string title = "LootOverhaulDebug:", Color? c = null)
         {
             if (!LootOverhaulSettings.Instance.DebugEnabled)
                 return;
-            InformationManager.DisplayMessage(new InformationMessage(title + " " + message));
+
+            var color = c ?? Color.White;
+            InformationManager.DisplayMessage(new InformationMessage(title + " " + message, color));
+            
         }
 
         public static void WriteException(string exceptionMessage, string title = "LootOverhaulException:")
@@ -120,7 +124,7 @@ namespace LootOverhaul
         {
             string message = _equipmentFromSlot.Item.Name.ToString();
             string side = _isEnemy ? "enemy:" : "ally:";
-            SubModule.WriteDebug(message, "Looted "+side);
+            SubModule.WriteDebug(message, "Looted "+side, Color.FromUint(4282569842U));
         }
 
         public static T PickRandom<T>(this IEnumerable<T> source)

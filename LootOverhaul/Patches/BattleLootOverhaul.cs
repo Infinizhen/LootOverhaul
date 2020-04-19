@@ -20,13 +20,13 @@ namespace LootOverhaul
                     return;
 
                 if ((affectedAgent.Character == PartyBase.MainParty.Leader || affectedAgent.IsMount))
+                    return;
+
+                if (affectorAgent == null && !LootOverhaulSettings.Instance.LootPanickedEnabled)
                 {
                     SubModule.WriteDebug("Some coward has fleed...");
                     return;
                 }
-
-                if (affectorAgent == null && !LootOverhaulSettings.Instance.LootPanickedEnabled)
-                    return;
 
                 if (affectedAgent.Team.IsPlayerAlly)
                 {

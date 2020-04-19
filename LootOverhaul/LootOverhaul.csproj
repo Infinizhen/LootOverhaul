@@ -38,11 +38,7 @@
       <HintPath>.\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="ModLib">
-      <HintPath>C:\Users\dark_\Desktop\ModLib\bin\Win64_Shipping_Client\ModLib.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="ModLib.Patches">
-      <HintPath>C:\Users\dark_\Desktop\ModLib\bin\Win64_Shipping_Client\ModLib.Patches.dll</HintPath>
+      <HintPath>..\ModLib.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="PresentationFramework" />

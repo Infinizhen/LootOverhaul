@@ -27,15 +27,16 @@ namespace LootOverhaul
             {
                 try
                 {
+                    if (itemsLooted >= maxItemsToLoot)
+                        break;
+
                     equipmentElement = character.Equipment.GetEquipmentFromSlot(ei);
                     if (equipmentElement.Item == null)
                         continue;
-
+                    
                     LootExecuted(equipmentElement.Item);
                     LootOverhaul.WriteLootMessage(equipmentElement);
-
-                    if (itemsLooted >= maxItemsToLoot)
-                        break;
+                    itemsLooted++;
                 }
                 catch (Exception ex)
                 {

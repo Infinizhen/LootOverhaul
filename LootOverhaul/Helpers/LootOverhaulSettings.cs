@@ -32,7 +32,7 @@ namespace LootOverhaul
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
         [SettingProperty("Min. Extra chance to loot an unit", 0f, 1f, "Sets the minimum extra chance to loot an unit on death.")]
-        public float MinUnitLootChance { get; set; } = 0.03f;
+        public float MinUnitLootChance { get; set; } = 0.02f;
 
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
@@ -42,12 +42,12 @@ namespace LootOverhaul
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
         [SettingProperty("Min. Extra chance to loot item", 0f, 1f, "Sets the minimum extra chance to loot a random dead unit equiped item.")]
-        public float MinItemLootChance { get; set; } = 0.08f;
+        public float MinItemLootChance { get; set; } = 0.05f;
 
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
         [SettingProperty("Max. Extra chance to loot item", 0f, 1f, "Sets the maximum extra chance to loot a random dead unit equiped item.")]
-        public float MaxItemLootChance { get; set; } = 0.20f;
+        public float MaxItemLootChance { get; set; } = 0.15f;
 
         [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
