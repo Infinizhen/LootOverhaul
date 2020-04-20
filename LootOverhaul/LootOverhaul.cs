@@ -78,6 +78,14 @@ namespace LootOverhaul
             
         }
 
+        public static void WriteLootMessage(EquipmentElement _equipmentFromSlot, bool _isEnemy = true)
+        {
+            string message = _equipmentFromSlot.Item.Name.ToString();
+            string side = _isEnemy ? "enemy:" : "ally:";
+            if(LootOverhaulSettings.Instance.ShowLootMessages || LootOverhaulSettings.Instance.DebugEnabled)
+                InformationManager.DisplayMessage(new InformationMessage("Looted " + side+" "+message, Color.FromUint(4282569842U)));
+        }
+
         public static void WriteException(string exceptionMessage, string title = "LootOverhaulException:")
         {
             WriteMessageInChatLog(exceptionMessage, title);

@@ -30,6 +30,11 @@ namespace LootOverhaul
         public bool DebugEnabled { get; set; } = false;
 
         [XmlElement]
+        [SettingPropertyGroup("Developer options")]
+        [SettingProperty("Loot Messages", "Shows a chat message when you loot something, even when debug is disabled.")]
+        public bool ShowLootMessages { get; set; } = false;
+
+        [XmlElement]
         [SettingPropertyGroup("Extra drop chances")]
         [SettingProperty("Min. Extra chance to loot an unit", 0f, 1f, "Sets the minimum extra chance to loot an unit on death.")]
         public float MinUnitLootChance { get; set; } = 0.02f;
