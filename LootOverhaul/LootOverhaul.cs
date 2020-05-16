@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using ModLib;
+using ModLib.Definitions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
