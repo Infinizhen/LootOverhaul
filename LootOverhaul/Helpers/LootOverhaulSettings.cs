@@ -1,5 +1,5 @@
-using ModLib;
-using ModLib.Attributes;
+using ModLib.Definitions;
+using ModLib.Definitions.Attributes;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -17,7 +17,7 @@ namespace LootOverhaul
         {
             get
             {
-                return (LootOverhaulSettings)SettingsDatabase.GetSettings(InstanceID);
+                return (LootOverhaulSettings)SettingsDatabase.GetSettings<LootOverhaulSettings>();
             }
         }
 
