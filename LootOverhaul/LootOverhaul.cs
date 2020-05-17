@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using ModLib;
+using ModLib.Definitions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +15,15 @@ namespace LootOverhaul
 {
     public class SubModule : MBSubModuleBase
     {
+        protected override void OnBeforeInitialModuleScreenSetAsRoot()
+        {
+            InitializeModLib();
+        }
+
         protected override void OnSubModuleLoad()
         {
             base.OnSubModuleLoad();
             //MessageBox.Show("STOP");
-            InitializeModLib();
             ApplyHarmonyPatches();
             //SetTestOptionInMainMenu();
         }
@@ -28,7 +33,7 @@ namespace LootOverhaul
             try
             {
                 FileDatabase.Initialise("zLootOverhaul");
-                SettingsDatabase.RegisterSettings((FileDatabase.Get<LootOverhaulSettings>("zLootOverhaul") ?? new LootOverhaulSettings()));
+                // SettingsDatabase.RegisterSettings((FileDatabase.Get<LootOverhaulSettings>("zLootOverhaul") ?? new LootOverhaulSettings()));
             }
             catch (Exception ex)
             {
